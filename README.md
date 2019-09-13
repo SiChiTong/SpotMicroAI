@@ -1,102 +1,55 @@
-# SpotMicro AI 
+![Logo](https://images.weserv.nl/?w=800&bg=ffffff&url=https://github.com/FlorianWilk/SpotMicroAI/blob/master/docs/assets/logo.png?raw=true)
 
-I started this Project because i got inspired by some very smart People/Companies and Projects out there and want to 
-understand and adapt their work. It is based on existing OpenSource-Projects and uses affordable Hardware to enable other people to build their own Bots and help us to understand how to control it the way we want.
+## Abstract:
+The SpotMicroAI project is designed to be a low cost, easily built quadruped robot. The design is roughly based off of Boston Dynamics quadruped robot SpotMini, though with obvious adaptations such as size and sensor suite.
 
-This Project is heavily work in progress and may change every day. It is NOT a working or even finished Project you might want to use. 
+The project is maintained by a community of volunteers and is very much still in its early stages. Any individual is welcome to contribute, and in particular expertise in areas involving simulation, reinforcement learning, and hardware development is greatly appreciated.
 
-![PyBullet Simulation](/Images/SpotMicroAI_pybullet_lidar3.png)
+## Getting started:
+COMPLETE DOCUMENTATION AND GETTING STARTED GUIDES CAN BE FOUND AT:
+[https://spotmicroai.readthedocs.io/en/latest/](https://spotmicroai.readthedocs.io/en/latest/)
 
-[See the first movements of SpotMicroAI on YouTube](https://www.youtube.com/watch?v=vayiiII4xVQ)
+[spotmicroai.readthedocs.io](http://spotmicroai.readthedocs.io)
 
-Parts of this Project:
-1. build a working physical Robot with cheap components everyone can build
-2. create a simulated Environment and be able to control the Robot 
-3. to do RL training to make it learn how to stand/walk/run
+The best place to get started is to read the getting started documentation at [spotmicroai.readthedocs.io](spotmicroai.readthedocs.io). The documentation will eventually contain a complete tutorial for building a SpotMicroAI including where to source components, links to most recent 3D files for printing, assembly, and installing the software. It's being updated as we go.
 
-## 1. The physical Robot
+For questions or more information please see the [Forums at SpotMicroAI.org](http://SpotMicroAI.org), or asked on slack. Join our slack at: [https://spotmicroai-inviter.herokuapp.com/](https://spotmicroai-inviter.herokuapp.com/)
 
-![SpotMicroAI](/Images/SpotMicroAI_1.jpg)
+## Hardware:
+![physial Bot](Images/SpotMicroAI_complete_1.jpg)
 
-First of all thanks to Deok-yeon Kim aka KDY0523 who made [this incredible work on Thingiverse](https://www.thingiverse.com/thing:3445283)
+The hardware for SpotMicroAI is designed to be both aesthetically pleasing as well as easily obtainable and readily available. Wherever possible standard screws, bolts, and bearings are used. Standard hobby grade servos are currently used for locomotion in development however, they don't appear to have sufficient power to drive the robot at more than the slowest speeds. Other options are currently being investigated (including high-voltage and brushless hobby servos typically used with RC cars) which we hope will lead to a balance between an economical as well as robust robot.
 
-This basically is the physical Robot. It will take some Days to print and assemble all the Parts, but it's worth all the effort. I also sanded, primed and painted all the Parts to give it a nicer Look.
+The vast majority of the hardware by volume is designed to be 3D printed. So far complete prints have been successful in PLA, though no technical barriers should exist to printing the robot in other material such as PETG, nylon, ABS, etc. The majority of parts require significant supports to print.
 
-[Here is my Thingiverse-Make](https://www.thingiverse.com/make:654812)
+The files available both as STL and STP. As a community we have not yet settled on a servo for this project and therefore multiple versions of the hardware exist to support the physical dimensions of the servos and their respective servo horns. For the most up-to-date version of the hardware please visit: [https://www.thingiverse.com/thing:3761340](https://www.thingiverse.com/thing:3761340). Please see documentation for details as to which files correspond to which servo.
 
-Since my setup required some additional Hardware, i recreated some parts using FreeCAD - see /Parts-Directory.
+## Electronics:
+![NVIDIA Jetson Nano](Images/SpotMicroAI_jetson.jpg)
 
-![Parts](/Images/SpotMicroAI_FreeCad.png)
+The brain of this project is designed to be powered by a Raspberry Pi 4. The Pi is connected to a PCA9685 controller board which allows communication to the 12 servos required to articulate the hips and legs.
 
-### NVIDIA Jetson Nano
+Sensors include a raspberry pi camera, MPU6050 Gyro accelerometer combination, and several ultrasound sensors. Some users have also integrated a RPiLIDAR A1 into their build.
 
-To have some Protection for the NVIDIA Jetson Nano i printed [this Case from Thingiverse](https://www.thingiverse.com/thing:3603594).
+## Software:
+![ROS](Images/SpotMicroAI_rviz_urdf.png)
 
-![JetsonNano-Case](/Images/jetsonNanoCase.jpg)
+the software in this project is still very immature. Current experience has focused on running C++ directly on the Jetson and preliminary tests have occurred with robot operating system (ROS). The current work has focused on developing a robust gate for the robot and so work on other aspects such as navigation path planning but have not yet started.
 
-The Jetson Nano is connected to a 16 Channel PCA9685 I2C-Servo Driver which controls all the Servos. 
-I will also try to connect the I2C OLED Display and the LED-Circle to it.
+Current efforts to develop the gait through reinforcement learning have taken place in the PyBullet. Preliminary work in open AI gym has begun. There has also been discussion about using unity as a platform for reinforcement learning, in particular to be able to utilize the advanced graphics in the game engine for image recognition training on the RPi cam.
 
-[Here you can find the all the Code for the Jetson Nano](/JetsonNano)
+![PyBullet Simulation](Images/SpotMicroAI_pybullet_lidar3.png)
 
-### Sensors
+## Community:
+The primary community discussions take place on SpotMicro.org. The message boards there contain a repository of topics which span hardware and software.
 
-Since i am not a robotics company, i can't easily invest some hundreds of Euros/Dollars. So i will use Sonar Sensors instead of visual sensors like RGB or RGBD-Cams. Maybe i will try with ESPEyes or something in the near future.
+Real-time question-and-answer (or as close to real time as is possible when run by volunteers with full-time jobs and families) can happen on slack (LINK coming soon).
 
-Sensors used:
-- 4 x HC-SR04-Sensors. 2x as in the original model in the front looking forward/down. 2x at the bottom (front/back) looking down to measure the ground-distance. 
-- An IMU MPU-6050 is used to measure pitch,roll and velocities. Yaw will be ignored since it drifts quickly. 
+Other questions occasionally surface on other location such as on Thingiverse or on robotshop.com. We do our best answers these as we see them, but if you want to be heard the best way is either on SpotMicro.org or on slack.
 
-Also i have a SSD1306 OLED-Display and a NeoMatrix LED-Circle i want to include for the Style.
-In a first version i used an Arduino Mega as kind of Servo/Sensor-Controller and a Raspberry PI as Locomotion-Controller (communication via UART). But it showed up that the Arduino is too slow to handle Sensor-Signals and Servo-PWM properly at the same time. 
+As a community we do have some small expenses such as web hosting fees and occasional developing fees. In the future, we would also like to hold events and competitions. To anyone who finds enjoyment or education in this project we appreciate the financial support you're able to give. Donations coming soon.
 
-I am not sure if the Hardware i use now will be enough to finally have a very smooth walking Robot like for Example the real SpotMini. See this more as a Research-Project where I try to use cheap Hardware and other People's Work to learn more about how this all works. 
+All donations stay in the community and go towards future development.
 
-## 2. Simulation
-
-![PyBullet](/Images/SpotMicroAI_stairs.png)
-
-I try to implement the Ideas of [this Paper](https://arxiv.org/pdf/1804.10332.pdf) by
-Jie Tan, Tingnan Zhang, Erwin Coumans, Atil Iscen, Yunfei Bai, Danijar Hafner, Steven Bohez, and Vincent Vanhoucke
-Google Brain,Google DeepMind
-
-Here you can see the first version of the URDF-Model.
-
-![urdf](/Images/SpotMicroAI_urdf2.png)
-
-And here the Model with working Kinematics in a PyBullet-Simulation.
-
-The URDF Model is very basic and work in progress. Masses and Inertias are guesses and not correct. I will have to disassemble the Robot to have correct weights. 
-
-### Quickstart
-
-This example can be found in the Repository. You need a GamePad for this to work:
-```
-pip3 install numpy
-pip3 install pybullet
-pip3 install inputs
-
-cd Core/
-python3 example_leg_motion.py
-```
-
-### Kinematics
-
-In order to be able to move the Robot or event make it walk, we need something which tells us what servo-angles
-will be needed for a Leg to reach position XYZ.
-This is what InverseKinematics does. We know all the constraints, the length of the legs, how the joints rotate and where they are positioned. 
-
-You can find [some a first draft of the calculations here](https://github.com/FlorianWilk/SpotMicroAI/tree/master/Kinematics). There is also a [Jupyter Notebook explaining the Kinematics](https://github.com/FlorianWilk/SpotMicroAI/tree/master/Kinematics/Kinematic.ipynb) and a [YouTube-Video](https://www.youtube.com/watch?v=VSkqhFok17Q).
-
-## 3. Training
-
-There is no real Training-Code yet.
-
-## Credits and thanks
-
-- Deok-yeon Kim creator of SpotMicro
-- Boston Dynamics who built this incredible SpotMini,
-- Ivan Krasin - https://ivankrasin.com/about/ - thanks for inspiration and chatting
-- Jie Tan, Tingnan Zhang, Erwin Coumans, Atil Iscen, Yunfei Bai, Danijar Hafner, Steven Bohez, and Vincent Vanhoucke
-Google Brain,Google DeepMind 
+If you use this worker will any work derived from it in academic publication please cite it as: *insert citation here*.
 

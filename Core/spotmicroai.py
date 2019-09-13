@@ -20,14 +20,16 @@ class RobotState(Enum):
 
 class Robot:
 
-    def __init__(self,useFixedBase=False,useStairs=True):      
+    def __init__(self,useFixedBase=False,useStairs=True,resetFunc=None):      
 
         # Simulation Configuration
         self.useMaximalCoordinates = False
+        self.resetFunc=resetFunc
         self.useRealTime = True
         self.debugLidar=False
+        self.rotateCamera=False
         self.debug=False
-        self.fixedTimeStep = 1. / 500
+        self.fixedTimeStep = 1. / 550
         self.numSolverIterations = 200
         self.useFixedBase =useFixedBase
         self.useStairs=useStairs
@@ -63,6 +65,7 @@ class Robot:
         p.setRealTimeSimulation(self.useRealTime)
 
         self.quadruped = self.loadModels()
+        self.createEnv()
         self.changeDynamics(self.quadruped)
         self.jointNameToId = self.getJointNames(self.quadruped)
         replaceLines=True
@@ -74,7 +77,6 @@ class Robot:
         self.rayMissColor = [0,1,0]
         rayLen = 12
         rayStartLen=0.12
-        
         for i in range (self.numRays):
             #rayFrom.append([0,0,0])
             h=0.045
@@ -96,6 +98,8 @@ class Robot:
 
         
         self.kin = Kinematic()
+        p.setPhysicsEngineParameter(numSolverIterations=self.numSolverIterations)
+        #p.setTimeStep(self.fixedTimeStep)
 
         p.setRealTimeSimulation(self.useRealTime)
         self.ref_time = time.time()
@@ -106,13 +110,36 @@ class Robot:
         self.projection_matrix = p.computeProjectionMatrixFOV(fov, aspect, nearplane, farplane)
 
         self.lastLidarTime=0
+    
+    def createEnv(self):
+        shift = [0, -0.0, 0]
+        meshScale = [0.1, 0.1, 0.1]
+        visualShapeId = p.createVisualShape(shapeType=p.GEOM_BOX,
+                                            rgbaColor=[1, 1, 1, 1],
+                                            specularColor=[0.4, .4, 0],
+                                            halfExtents=[1,1,.5],
+                                            visualFramePosition=shift)
+        collisionShapeId = p.createCollisionShape(shapeType=p.GEOM_BOX,
+                                            collisionFramePosition=shift,
+                                            halfExtents=[1,1,.5])
+        atexUid = p.loadTexture("concrete2.png")
+        rangex = 5
+        rangey = 5
+        for i in range(rangex):
+            for j in range(rangey):
+                s=p.createMultiBody(baseMass=1000,
+                                baseInertialFramePosition=[0, 0, 0],
+                                baseCollisionShapeIndex=collisionShapeId,
+                                baseVisualShapeIndex=visualShapeId,
+                                basePosition=[((-rangex / 2) + i) * 5,
+                                                (-rangey / 2 + j) * 5, 1],
+                                useMaximalCoordinates=True)
+                p.changeVisualShape(s, -1, textureUniqueId=atexUid)
 
 
     def loadModels(self):
         p.configureDebugVisualizer(p.COV_ENABLE_RENDERING, 0)
         p.setGravity(0, 0, -9.81)
-#        p.setPhysicsEngineParameter(numSolverIterations=self.numSolverIterations)
-        #p.setTimeStep(self.fixedTimeStep)
 
         orn = p.getQuaternionFromEuler([math.pi/30*0, 0*math.pi/50, 0])
         p.setAdditionalSearchPath(pybullet_data.getDataPath())
@@ -196,11 +223,14 @@ class Robot:
         #TODO: Use the camera image
 
     def resetBody(self):
+        self.ref_time=time.time()
         if len(self.oldDebugInfo)>0:
             for x in self.oldDebugInfo:
                 p.removeUserDebugItem(x)        
         p.resetBasePositionAndOrientation(self.quadruped, self.init_position,[0,0,0,1])
         p.resetBaseVelocity(self.quadruped, [0, 0, 0], [0, 0, 0])
+        if(self.resetFunc):
+            self.resetFunc()
 
     def checkSimulationReset(self,bodyOrn):
         (xr, yr, _) = p.getEulerFromQuaternion(bodyOrn)
@@ -229,6 +259,12 @@ class Robot:
         return bodyOrn,linearVel,angularVel
 
     def step(self):
+
+        if (self.useRealTime):
+            self.t = time.time() - self.ref_time
+        else:
+            self.t = self.t + self.fixedTimeStep
+
         quadruped=self.quadruped
         bodyPos, bodyOrn = p.getBasePositionAndOrientation(quadruped)
         linearVel, angularVel = p.getBaseVelocity(quadruped)
@@ -242,7 +278,8 @@ class Robot:
 
         if self.checkSimulationReset(bodyOrn):
             return False
-
+        if self.rotateCamera:
+            p.resetDebugVisualizerCamera(0.7,self.t*10,-5,bodyPos)
         # Calculate Angles with the input of FeetPos,BodyRotation and BodyPosition
         angles = self.kin.calcIK(self.Lp, self.rot, self.pos)
 
@@ -275,13 +312,9 @@ class Robot:
                     dis=math.sqrt(localHitTo[0]**2+localHitTo[1]**2+localHitTo[2]**2)
                     if self.debugLidar:
                         p.addUserDebugLine(self.rayFrom[i],localHitTo, self.rayHitColor,replaceItemUniqueId=self.rayIds[i],parentObjectUniqueId=quadruped, parentLinkIndex=0)
-            lastLidarTime = nowLidarTime                                        
+            self.lastLidarTime = nowLidarTime                                        
 
-        # let the Simulator do the rest    
-        if (self.useRealTime):
-            self.t = time.time() - self.ref_time
-        else:
-            self.t = self.t + self.fixedTimeStep
+
         if (self.useRealTime == False):
             p.stepSimulation()
             time.sleep(self.fixedTimeStep)
